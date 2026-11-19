@@ -6,14 +6,47 @@
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 :root{color-scheme:dark;font-family:'DM Sans',sans-serif;background:#101110;color:#f0f1e9}*{box-sizing:border-box}body{-webkit-user-select:none;user-select:none;margin:0;min-height:100svh;cursor:pointer;overflow-x:hidden;background:radial-gradient(ellipse at 50% 42%,#20251a66,transparent 54%)}button{font:inherit}main{min-height:100svh;display:flex;flex-direction:column;padding:36px 5vw 26px;position:relative}header,footer{display:flex;align-items:center;justify-content:space-between;gap:20px}.brand{font-family:'Space Grotesk',sans-serif;font-size:24px;font-weight:600;letter-spacing:-1px}.brand span{color:#c7f785}.tag{color:#8e9288;font-size:12px;border:1px solid #32362d;padding:8px 13px;border-radius:30px;display:flex;align-items:center;gap:8px}.dot{width:5px;height:5px;border-radius:50%;background:#c7f785}.center{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:55px 0}.eyebrow{font-size:11px;letter-spacing:3px;color:#a1a796;font-weight:600}.number{font-family:'Space Grotesk',sans-serif;font-size:clamp(130px,26vw,290px);font-weight:500;line-height:1.12;letter-spacing:-.08em;padding-right:.08em;color:#d6ff9e;text-shadow:0 0 90px #a0da3820;font-variant-numeric:tabular-nums}.rule{width:42px;height:1px;background:#545e43;margin:19px 0 27px}h1{font-size:23px;font-weight:500;letter-spacing:-.7px;margin:0 0 12px}.hint{font-size:14px;color:#81877a;margin:0}.trigger{margin-top:28px;color:#d2d8c8;border:1px solid #3a4132;background:#22281c;border-radius:50px;padding:12px 20px;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:10px}.trigger:hover{background:#313e23;border-color:#7a9656}.trigger:focus-visible{outline:2px solid #c7f785;outline-offset:5px}.key{font-size:10px;border:1px solid #536047;border-radius:4px;padding:2px 5px;color:#a0ae91}footer{border-top:1px solid #292d25;padding-top:21px;color:#737c69;font-size:11px}.history{display:flex;gap:9px;align-items:center;min-height:30px}.history span{border:1px solid #353b2e;color:#a9b69a;min-width:29px;padding:6px;border-radius:7px;text-align:center}.history-label{margin-right:7px}.pulse{animation:reveal .28s ease-out}@keyframes reveal{from{opacity:.25;transform:translateY(10px) scale(.96)}to{opacity:1;transform:none}}@media(max-width:550px){main{padding:25px 24px 20px}.brand{font-size:22px}.tag{font-size:10px}.center{padding:70px 0}.number{font-size:43vw}h1{font-size:20px}footer{align-items:flex-start;flex-direction:column;gap:14px}.history{flex-wrap:wrap}.key{display:none}}@media(prefers-reduced-motion:reduce){.pulse{animation:none}}
-</style>
+.timer {
+  margin-top: 24px;
+  padding: 14px 30px;
+  border: 1px solid #56623e;
+  border-radius: 18px;
+  background: #202719;
+}
+.timer-label {
+  display: block;
+  color: #b2bea3;
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+.timer-value {
+  display: block;
+  margin-top: 4px;
+  color: #d6ff9e;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: clamp(38px, 7vw, 56px);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.15;
+}</style>
 </head><body><main>
 <header><div class="brand">hasard<span>®</span></div><div class="tag"><i class="dot"></i> Entre 1 et 100</div></header>
-<section class="center" aria-label="Générateur de nombres"><div class="eyebrow">LAISSEZ FAIRE LE HASARD</div><div class="number" id="number" aria-live="polite" aria-atomic="true">42</div><div class="rule"></div><h1>Un clic. Une nouvelle possibilité.</h1><p class="hint">Cliquez n’importe où pour tirer un nombre.</p><button class="trigger" type="button">↻ &nbsp; À vous de jouer <span class="key">ESPACE</span></button></section>
+<section class="center" aria-label="Générateur de nombres"><div class="eyebrow">LAISSEZ FAIRE LE HASARD</div><div class="number" id="number" aria-live="polite" aria-atomic="true">42</div><div class="timer" role="timer" aria-label="Temps écoulé depuis le dernier tirage"><span class="timer-label">Temps depuis le tirage</span><span class="timer-value" id="elapsed">0 s</span></div><div class="rule"></div><h1>Un clic. Une nouvelle possibilité.</h1><p class="hint">Cliquez n’importe où pour tirer un nombre.</p><button class="trigger" type="button">↻ &nbsp; À vous de jouer <span class="key">ESPACE</span></button></section>
 <footer><div class="history" id="history"><div class="history-label">Derniers tirages</div></div><div id="count">01 tirage · 100 possibilités</div></footer>
 </main><script>
 const number=document.getElementById('number'),history=document.getElementById('history'),count=document.getElementById('count');let draws=0,recent=[];
+const elapsed = document.getElementById('elapsed');
+let lastDrawTime = performance.now();
+
+function updateTimer() {
+  const seconds = Math.floor((performance.now() - lastDrawTime) / 1000);
+  elapsed.textContent = seconds + ' s';
+}
+
+setInterval(updateTimer, 200);
+document.addEventListener('visibilitychange', updateTimer);
 function randomNumber(){const buffer=new Uint32Array(1);do{crypto.getRandomValues(buffer)}while(buffer[0]>=4294967200);return buffer[0]%100+1}
-function draw(){const value=randomNumber();draws++;number.textContent=value;number.classList.remove('pulse');void number.offsetWidth;number.classList.add('pulse');recent.unshift(value);recent=recent.slice(0,5);history.replaceChildren();const label=document.createElement('div');label.className='history-label';label.textContent='Derniers tirages';history.append(label);recent.forEach(n=>{const chip=document.createElement('span');chip.textContent=n;history.append(chip)});count.textContent=String(draws).padStart(2,'0')+' tirage'+(draws>1?'s':'')+' · 100 possibilités'}
+function draw(){lastDrawTime = performance.now(); updateTimer(); const value=randomNumber();draws++;number.textContent=value;number.classList.remove('pulse');void number.offsetWidth;number.classList.add('pulse');recent.unshift(value);recent=recent.slice(0,5);history.replaceChildren();const label=document.createElement('div');label.className='history-label';label.textContent='Derniers tirages';history.append(label);recent.forEach(n=>{const chip=document.createElement('span');chip.textContent=n;history.append(chip)});count.textContent=String(draws).padStart(2,'0')+' tirage'+(draws>1?'s':'')+' · 100 possibilités'}
 document.addEventListener('click',draw);document.addEventListener('keydown',event=>{if((event.code==='Space'||event.code==='Enter')&&event.target.tagName!=='BUTTON'){event.preventDefault();if(!event.repeat)draw()}});draw();
 </script></body></html>
